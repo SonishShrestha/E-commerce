@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:ecommerce/model/cartproduct.dart';
+import 'package:ecommerce/final_cart_data.dart';
 import 'package:ecommerce/model/fakestore.dart';
 import 'package:flutter/material.dart';
+import 'package:ecommerce/model/cartproduct.dart';
 
 void main() {
   runApp(const MyApp());
@@ -101,86 +102,111 @@ class _MyHomePageState extends State<MyHomePage> {
           endDrawer: Drawer(
             child: SingleChildScrollView(
               child: Column(
-                  children: carts.map((cart) {
-                return Container(
-                  margin: const EdgeInsets.only(top: 30),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                        backgroundImage: NetworkImage(cart.fakeStores.image)),
-                    title: Column(
-                      children: [
-                        Text(cart.fakeStores.title),
-                        Text('${cart.fakeStores.price}\$')
-                      ],
-                    ),
-                    subtitle: Row(
-                      children: [
-                        IconButton(
-                            onPressed: () {
-                              setState(() {
-                                cart.quantity--;
-                              });
-                            },
-                            icon: const Icon(Icons.remove)),
-                        Text(cart.quantity.toString()),
-                        IconButton(
-                            onPressed: () {
-                              setState(() {
-                                cart.quantity++;
-                              });
-                            },
-                            icon: const Icon(Icons.add)),
-                        Column(
+                children: [
+                  Column(
+                      children: carts.map((cart) {
+                    return Container(
+                      margin: const EdgeInsets.only(top: 30),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                            backgroundImage:
+                                NetworkImage(cart.fakeStores.image)),
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: const Text('update your quantity'),
-                                      actions: [
-                                        TextField(
-                                          decoration: const InputDecoration(
-                                              hintText: 'update quantty'),
-                                          controller: quantityUpdate,
-                                          keyboardType: TextInputType.number,
-                                        ),
-                                        IconButton(
-                                            onPressed: () {
-                                              final values =
-                                                  quantityUpdate.text;
-
-                                              setState(() {
-                                                cart.quantity =
-                                                    int.parse(values);
-                                              });
-                                              quantityUpdate.clear();
-                                            },
-                                            icon: const Icon(Icons.update)),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                              child: const Text('Update'),
-                            ),
-                            ElevatedButton(
+                            Text(cart.fakeStores.title),
+                            Text('${cart.fakeStores.price * cart.quantity}\$')
+                          ],
+                        ),
+                        subtitle: Row(
+                          children: [
+                            IconButton(
                                 onPressed: () {
                                   setState(() {
-                                    carts.removeWhere((element) =>
-                                        cart.fakeStores.id ==
-                                        element.fakeStores.id);
+                                    if (cart.quantity > 1) {
+                                      cart.quantity--;
+                                    }
                                   });
                                 },
-                                child: Text('Delete'))
+                                icon: const Icon(Icons.remove)),
+                            Text(cart.quantity.toString()),
+                            IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    cart.quantity++;
+                                  });
+                                },
+                                icon: const Icon(Icons.add)),
+                            Column(
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: const Text(
+                                              'update your quantity'),
+                                          actions: [
+                                            TextField(
+                                              decoration: const InputDecoration(
+                                                  hintText: 'update quantity'),
+                                              controller: quantityUpdate,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                            ),
+                                            IconButton(
+                                                onPressed: () {
+                                                  final values =
+                                                      quantityUpdate.text;
+
+                                                  setState(() {
+                                                    cart.quantity =
+                                                        int.parse(values);
+                                                  });
+                                                  quantityUpdate.clear();
+                                                },
+                                                icon: const Icon(Icons.update)),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: const Text('Update'),
+                                ),
+                                ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        carts.removeWhere((element) =>
+                                            cart.fakeStores.id ==
+                                            element.fakeStores.id);
+                                      });
+                                    },
+                                    child: Text('Delete'))
+                              ],
+                            )
                           ],
-                        )
-                      ],
-                    ),
-                  ),
-                );
-              }).toList()),
+                        ),
+                      ),
+                    );
+                  }).toList()),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(
+                        builder: (context) {
+                          return FinalCartData(
+                            finalCartData: carts,
+                          );
+                        },
+                      ));
+                    },
+                    child: Text('Click to purchase'),
+                    style: ButtonStyle(
+                        backgroundColor: MaterialStateColor.resolveWith(
+                            (states) => Colors.green)),
+                  )
+                ],
+              ),
             ),
           ),
           body: SingleChildScrollView(
