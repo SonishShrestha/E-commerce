@@ -12,9 +12,13 @@ class FinalCartData extends StatefulWidget {
 
 class _FinalCartDataState extends State<FinalCartData> {
   total() {
-    return widget.finalCartData
-        .map((e) => e.fakeStores.price * e.quantity)
-        .reduce((value, element) => value + element);
+    if (widget.finalCartData.isNotEmpty) {
+      return widget.finalCartData
+          .map((e) => e.fakeStores.price * e.quantity)
+          .reduce((value, element) => value + element);
+    } else {
+      return '0';
+    }
   }
 
   @override
