@@ -18,7 +18,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List categoryData = [];
   List<FakeStore> getDataByCategoryName = [];
 
-  fakeStoreData() async {
+  Future<List<FakeStore>> fakeStoreData() async {
     Dio dio = Dio();
     final response = await dio.get('https://fakestoreapi.com/products/');
     responseDatas = response.data
@@ -30,11 +30,12 @@ class _MyHomePageState extends State<MyHomePage> {
     return responseDatas;
   }
 
-  void getByCategory() async {
+  Future<List<dynamic>> getByCategory() async {
     Dio dio = Dio();
     final categoryResponse =
         await dio.get('https://fakestoreapi.com/products/categories');
-    categoryData = categoryResponse.data;
+
+    return categoryResponse.data;
   }
 
   Future<List<FakeStore>> getByCategoryName(String name) async {
@@ -51,12 +52,24 @@ class _MyHomePageState extends State<MyHomePage> {
     return getDataByCategoryName;
   }
 
+  Map<String, List<FakeStore>> categorymap = {};
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    getByCategory();
-    fakeStoreData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    getByCategory().then((cat) {
+      for (var element in cat) {
+        getByCategoryName(element).then((prod) {
+          categorymap.putIfAbsent(element, () => prod);
+          setState(() {});
+        });
+      }
+    });
+    super.didChangeDependencies();
   }
 
   final GlobalKey<ScaffoldState> scaffoldkey = GlobalKey<ScaffoldState>();
@@ -127,51 +140,65 @@ class _MyHomePageState extends State<MyHomePage> {
                                     showDialog(
                                       context: context,
                                       builder: (context) {
-                                        return AlertDialog(
-                                          title: const Text(
-                                              'update your quantity'),
-                                          actions: [
-                                            TextFormField(
-                                              key: _formKey,
-                                              validator: (value) {
-                                                if (value == null ||
-                                                    value.isEmpty) {
-                                                  return 'Enter data';
-                                                }
-                                                return null;
-                                              },
-                                              decoration: const InputDecoration(
-                                                  hintText: 'update quantity'),
-                                              controller: quantityUpdate,
-                                              keyboardType:
-                                                  TextInputType.number,
-                                            ),
-                                            IconButton(
-                                                onPressed: () {
-                                                  final values =
-                                                      quantityUpdate.text;
-                                                  if (_formKey.currentState ==
-                                                      null) {
-                                                    print(
-                                                        "_formKey.currentState is null!");
-                                                  } else if (_formKey
-                                                      .currentState!
-                                                      .validate()) {
-                                                    print(
-                                                        "Form input is valid");
+                                        return Form(
+                                          key: _formKey,
+                                          child: AlertDialog(
+                                            title: const Text(
+                                                'update your quantity'),
+                                            actions: [
+                                              TextFormField(
+                                                validator: (value) {
+                                                  if (value == null ||
+                                                      value.isEmpty) {
+                                                    return 'Enter data';
                                                   }
-
-                                                  setState(() {
-                                                    if (values.isNotEmpty) {
-                                                      cart.quantity =
-                                                          int.parse(values);
-                                                      Navigator.pop(context);
-                                                    }
-                                                  });
-                                                  quantityUpdate.clear();
+                                                  return null;
                                                 },
-                                                icon: const Icon(Icons.update)),
-                                          ],
+                                                decoration:
+                                                    const InputDecoration(
+                                                        hintText:
+                                                            'update quantity'),
+                                                controller: quantityUpdate,
+                                                keyboardType:
+                                                    TextInputType.number,
+                                              ),
+                                              IconButton(
+                                                  onPressed: () {
+                                                    final values =
+                                                        quantityUpdate.text;
+                                                    // if (_formKey.currentState ==
+                                                    //     null) {
+                                                    //   print(
+                                                    //       "_formKey.currentState is null!");
+                                                    // } else if (_formKey
+                                                    //     .currentState!
+                                                    //     .validate()) {
+                                                    //   print(
+                                                    //       "Form input is valid");
+                                                    // }
+                                                    if (_formKey.currentState!
+                                                        .validate()) {
+                                                      setState(() {
+                                                        if (values.isNotEmpty) {
+                                                          cart.quantity =
+                                                              int.parse(values);
+                                                          Navigator.pop(
+                                                              context);
+                                                        }
+                                                      });
+                                                      quantityUpdate.clear();
+                                                    } else {
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(SnackBar(
+                                                              content: Text(
+                                                                  "Please fill up all the required field.")));
+                                                    }
+                                                  },
+                                                  icon:
+                                                      const Icon(Icons.update)),
+                                            ],
+                                          ),
                                         );
                                       },
                                     );
@@ -227,7 +254,8 @@ class _MyHomePageState extends State<MyHomePage> {
           body: SingleChildScrollView(
             child: SingleChildScrollView(
               child: Column(
-                  children: categoryData.map((e) {
+                  children: categorymap.keys.toList().map((e) {
+                var prodList = categorymap[e];
                 return Column(
                   children: [
                     Text(
@@ -235,66 +263,58 @@ class _MyHomePageState extends State<MyHomePage> {
                           e.toString().substring(1).toLowerCase(),
                       style: const TextStyle(fontSize: 20, color: Colors.black),
                     ),
-                    FutureBuilder<List<FakeStore>>(
-                      future: getByCategoryName(e),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                                children: snapshot.data!.map((byCategoryName) {
-                              return Card(
-                                  margin: const EdgeInsets.all(20),
-                                  elevation: 10,
-                                  shadowColor: Colors.black,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20)),
-                                  color: Colors.grey,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 20),
-                                    child: Column(
-                                      children: [
-                                        Image.network(
-                                          byCategoryName.image,
-                                          width: 50,
-                                        ),
-                                        Text(byCategoryName.title),
-                                        Text(
-                                            '${byCategoryName.price.toString()}\$'),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              final data = carts.where(
-                                                  (element) =>
-                                                      element.fakeStores.id ==
-                                                      byCategoryName.id);
-                                              if (data.isEmpty) {
-                                                carts.add(CartProduct(
-                                                    1, byCategoryName));
-                                              } else {
-                                                data.first.quantity++;
-                                              }
-                                            });
-                                          },
-                                          style: ButtonStyle(
-                                            backgroundColor:
-                                                MaterialStateProperty
-                                                    .resolveWith((states) =>
-                                                        Colors.black),
-                                          ),
-                                          child: const Text('Add to cart'),
-                                        )
-                                      ],
+                    if ((prodList ?? []).isEmpty)
+                      Text("Product Empty")
+                    else
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                            children: prodList!.map((byCategoryName) {
+                          return Card(
+                              margin: const EdgeInsets.all(20),
+                              elevation: 10,
+                              shadowColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20)),
+                              color: Colors.grey,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 20),
+                                child: Column(
+                                  children: [
+                                    Image.network(
+                                      byCategoryName.image,
+                                      width: 50,
                                     ),
-                                  ));
-                            }).toList()),
-                          );
-                        } else {
-                          return const CircularProgressIndicator();
-                        }
-                      },
-                    )
+                                    Text(byCategoryName.title),
+                                    Text(
+                                        '${byCategoryName.price.toString()}\$'),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          final data = carts.where((element) =>
+                                              element.fakeStores.id ==
+                                              byCategoryName.id);
+                                          if (data.isEmpty) {
+                                            carts.add(
+                                                CartProduct(1, byCategoryName));
+                                          } else {
+                                            data.first.quantity++;
+                                          }
+                                        });
+                                      },
+                                      style: ButtonStyle(
+                                        backgroundColor:
+                                            MaterialStateProperty.resolveWith(
+                                                (states) => Colors.black),
+                                      ),
+                                      child: const Text('Add to cart'),
+                                    )
+                                  ],
+                                ),
+                              ));
+                        }).toList()),
+                      )
                   ],
                 );
               }).toList()),
