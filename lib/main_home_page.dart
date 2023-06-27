@@ -225,111 +225,79 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           body: SingleChildScrollView(
-            child: Column(
-              children: [
-                Row(
+            child: SingleChildScrollView(
+              child: Column(
+                  children: categoryData.map((e) {
+                return Column(
                   children: [
-                    Expanded(
-                        child: Container(
-                      margin: EdgeInsets.all(20),
-                      child: TextField(
-                          onChanged: (value) {
-                            setState(() {
-                              searchProducts = carts
-                                  .where((element) => element
-                                      .fakeStores.category
-                                      .contains(value))
-                                  .toList();
-                            });
-                          },
-                          controller: searchProduct,
-                          decoration: InputDecoration(
-                              hintText: "Search for Product",
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20)))),
-                    )),
-                    IconButton(onPressed: () {}, icon: Icon(Icons.search)),
-                  ],
-                ),
-                SingleChildScrollView(
-                  child: Column(
-                      children: categoryData.map((e) {
-                    return Column(
-                      children: [
-                        Text(
-                          e[0].toString().toUpperCase() +
-                              e.toString().substring(1).toLowerCase(),
-                          style: const TextStyle(
-                              fontSize: 20, color: Colors.black),
-                        ),
-                        FutureBuilder<List<FakeStore>>(
-                          future: getByCategoryName(e),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) {
-                              return SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                    children:
-                                        snapshot.data!.map((byCategoryName) {
-                                  return Card(
-                                      margin: const EdgeInsets.all(20),
-                                      elevation: 10,
-                                      shadowColor: Colors.black,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(20)),
-                                      color: Colors.grey,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 20),
-                                        child: Column(
-                                          children: [
-                                            Image.network(
-                                              byCategoryName.image,
-                                              width: 50,
-                                            ),
-                                            Text(byCategoryName.title),
-                                            Text(
-                                                '${byCategoryName.price.toString()}\$'),
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  final data = carts.where(
-                                                      (element) =>
-                                                          element
-                                                              .fakeStores.id ==
-                                                          byCategoryName.id);
-                                                  if (data.isEmpty) {
-                                                    carts.add(CartProduct(
-                                                        1, byCategoryName));
-                                                  } else {
-                                                    data.first.quantity++;
-                                                  }
-                                                });
-                                              },
-                                              style: ButtonStyle(
-                                                backgroundColor:
-                                                    MaterialStateProperty
-                                                        .resolveWith((states) =>
-                                                            Colors.black),
-                                              ),
-                                              child: const Text('Add to cart'),
-                                            )
-                                          ],
+                    Text(
+                      e[0].toString().toUpperCase() +
+                          e.toString().substring(1).toLowerCase(),
+                      style: const TextStyle(fontSize: 20, color: Colors.black),
+                    ),
+                    FutureBuilder<List<FakeStore>>(
+                      future: getByCategoryName(e),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                                children: snapshot.data!.map((byCategoryName) {
+                              return Card(
+                                  margin: const EdgeInsets.all(20),
+                                  elevation: 10,
+                                  shadowColor: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20)),
+                                  color: Colors.grey,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 20),
+                                    child: Column(
+                                      children: [
+                                        Image.network(
+                                          byCategoryName.image,
+                                          width: 50,
                                         ),
-                                      ));
-                                }).toList()),
-                              );
-                            } else {
-                              return const CircularProgressIndicator();
-                            }
-                          },
-                        )
-                      ],
-                    );
-                  }).toList()),
-                ),
-              ],
+                                        Text(byCategoryName.title),
+                                        Text(
+                                            '${byCategoryName.price.toString()}\$'),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              final data = carts.where(
+                                                  (element) =>
+                                                      element.fakeStores.id ==
+                                                      byCategoryName.id);
+                                              if (data.isEmpty) {
+                                                carts.add(CartProduct(
+                                                    1, byCategoryName));
+                                              } else {
+                                                data.first.quantity++;
+                                              }
+                                            });
+                                          },
+                                          style: ButtonStyle(
+                                            backgroundColor:
+                                                MaterialStateProperty
+                                                    .resolveWith((states) =>
+                                                        Colors.black),
+                                          ),
+                                          child: const Text('Add to cart'),
+                                        )
+                                      ],
+                                    ),
+                                  ));
+                            }).toList()),
+                          );
+                        } else {
+                          return const CircularProgressIndicator();
+                        }
+                      },
+                    )
+                  ],
+                );
+              }).toList()),
             ),
           )),
     );
