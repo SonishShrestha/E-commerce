@@ -21,21 +21,19 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<List<FakeStore>> fakeStoreData() async {
     Dio dio = Dio();
     final response = await dio.get('https://fakestoreapi.com/products/');
-    responseDatas = response.data
-        .map((e) {
-          return FakeStore.fromJson(e);
-        })
-        .toList()
-        .cast<FakeStore>();
+    responseDatas = response.data;
+
     return responseDatas;
   }
 
-  Future<List<dynamic>> getByCategory() async {
+  Future<void> getByCategory() async {
     Dio dio = Dio();
     final categoryResponse =
         await dio.get('https://fakestoreapi.com/products/categories');
 
-    return categoryResponse.data;
+    setState(() {
+      categoryData = categoryResponse.data;
+    });
   }
 
   Future<List<FakeStore>> getByCategoryName(String name) async {
@@ -52,24 +50,11 @@ class _MyHomePageState extends State<MyHomePage> {
     return getDataByCategoryName;
   }
 
-  Map<String, List<FakeStore>> categorymap = {};
-
   @override
   void initState() {
+    // TODO: implement initState
     super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    getByCategory().then((cat) {
-      for (var element in cat) {
-        getByCategoryName(element).then((prod) {
-          categorymap.putIfAbsent(element, () => prod);
-          setState(() {});
-        });
-      }
-    });
-    super.didChangeDependencies();
+    getByCategory();
   }
 
   final GlobalKey<ScaffoldState> scaffoldkey = GlobalKey<ScaffoldState>();
@@ -252,72 +237,87 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           body: SingleChildScrollView(
-            child: SingleChildScrollView(
-              child: Column(
-                  children: categorymap.keys.toList().map((e) {
-                var prodList = categorymap[e];
-                return Column(
-                  children: [
-                    Text(
-                      e[0].toString().toUpperCase() +
-                          e.toString().substring(1).toLowerCase(),
-                      style: const TextStyle(fontSize: 20, color: Colors.black),
-                    ),
-                    if ((prodList ?? []).isEmpty)
-                      Text("Product Empty")
-                    else
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                            children: prodList!.map((byCategoryName) {
-                          return Card(
-                              margin: const EdgeInsets.all(20),
-                              elevation: 10,
-                              shadowColor: Colors.black,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20)),
-                              color: Colors.grey,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 20),
-                                child: Column(
-                                  children: [
-                                    Image.network(
-                                      byCategoryName.image,
-                                      width: 50,
-                                    ),
-                                    Text(byCategoryName.title),
-                                    Text(
-                                        '${byCategoryName.price.toString()}\$'),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          final data = carts.where((element) =>
-                                              element.fakeStores.id ==
-                                              byCategoryName.id);
-                                          if (data.isEmpty) {
-                                            carts.add(
-                                                CartProduct(1, byCategoryName));
-                                          } else {
-                                            data.first.quantity++;
-                                          }
-                                        });
-                                      },
-                                      style: ButtonStyle(
-                                        backgroundColor:
-                                            MaterialStateProperty.resolveWith(
-                                                (states) => Colors.black),
-                                      ),
-                                      child: const Text('Add to cart'),
-                                    )
-                                  ],
+            child: Column(
+              children: [
+                Column(
+                  children: categoryData.map((e) {
+                    return Column(
+                      children: [
+                        Text(
+                          e.toString(),
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        FutureBuilder<List<FakeStore>>(
+                          future: getByCategoryName(e.toString()),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children:
+                                      snapshot.data!.map((byCategoryName) {
+                                    return Card(
+                                        margin: const EdgeInsets.all(20),
+                                        elevation: 10,
+                                        shadowColor: Colors.black,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(20)),
+                                        color: Colors.grey,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 20),
+                                          child: Column(
+                                            children: [
+                                              Image.network(
+                                                byCategoryName.image,
+                                                width: 50,
+                                              ),
+                                              Text(byCategoryName.title),
+                                              Text(
+                                                  '${byCategoryName.price.toString()}\$'),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    final data = carts.where(
+                                                        (element) =>
+                                                            element.fakeStores
+                                                                .id ==
+                                                            byCategoryName.id);
+                                                    if (data.isEmpty) {
+                                                      carts.add(CartProduct(
+                                                          1, byCategoryName));
+                                                    } else {
+                                                      data.first.quantity++;
+                                                    }
+                                                  });
+                                                },
+                                                style: ButtonStyle(
+                                                  backgroundColor:
+                                                      MaterialStateProperty
+                                                          .resolveWith(
+                                                              (states) =>
+                                                                  Colors.black),
+                                                ),
+                                                child:
+                                                    const Text('Add to cart'),
+                                              )
+                                            ],
+                                          ),
+                                        ));
+                                  }).toList(),
                                 ),
-                              ));
-                        }).toList()),
-                      )
-                  ],
-                );
-              }).toList()),
+                              );
+                            } else {
+                              return CircularProgressIndicator();
+                            }
+                          },
+                        )
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
           )),
     );

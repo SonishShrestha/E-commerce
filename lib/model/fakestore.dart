@@ -1,3 +1,5 @@
+import 'package:flutter/src/material/card.dart';
+
 class FakeStore {
   int id;
   String title;
@@ -20,6 +22,8 @@ class FakeStore {
         data['image'],
         Rating.fromRating(data['rating']));
   }
+
+  map(Card Function(dynamic byCategoryName) param0) {}
 }
 
 class Rating {
